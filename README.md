@@ -109,8 +109,8 @@ erDiagram
 
 ### 1. Clone Repository
 ```bash
-git clone <repository-url>
-cd UASIN
+git clone https://github.com/danJidan/Sistem-Kas-Organisasi.git
+cd Sistem-Kas-Organisasi
 ```
 
 ### 2. Setup Database
@@ -527,8 +527,4 @@ Jika ada pertanyaan atau issue:
 ---
 
 **Happy Coding! 🚀**
-#   S i s t e m - K a s - O r g a n i s a s i 
- 
- #   S i s t e m - K a s - O r g a n i s a s i 
- 
- 
+#
