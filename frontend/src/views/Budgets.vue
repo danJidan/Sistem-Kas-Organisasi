@@ -2,7 +2,8 @@
   <div class="budgets">
     <div class="header">
       <h1>💼 Budgets</h1>
-      <button @click="showForm = true" class="btn btn-primary">+ Add Budget</button>
+      <button v-if="isAdmin" @click="showForm = true" class="btn btn-primary">+ Add Budget</button>
+      <span v-else class="info-text">📖 Viewing budgets (read-only)</span>
     </div>
     
     <div v-if="showForm" class="modal">
@@ -45,7 +46,7 @@
             <th>Planned Amount</th>
             <th>Period</th>
             <th>Status</th>
-            <th>Actions</th>
+            <th v-if="isAdmin">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -58,7 +59,7 @@
                 {{ budget.is_active ? 'Active' : 'Inactive' }}
               </span>
             </td>
-            <td>
+            <td v-if="isAdmin">
               <button @click="editBudget(budget)" class="btn btn-sm btn-primary">Edit</button>
               <button @click="deleteBudget(budget.id)" class="btn btn-sm btn-danger">Delete</button>
             </td>
@@ -70,7 +71,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import apiClient from '../api/axios';
 
 export default {
@@ -87,6 +88,10 @@ export default {
       end_date: '',
       is_active: 1
     });
+
+    // Check if user is admin
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const isAdmin = computed(() => user.role === 'admin');
 
     const fetchBudgets = async () => {
       try {
@@ -144,6 +149,7 @@ export default {
       showForm,
       editingId,
       form,
+      isAdmin,
       handleSubmit,
       editBudget,
       deleteBudget,
@@ -192,5 +198,11 @@ export default {
   padding: 6px 12px;
   font-size: 12px;
   margin-right: 5px;
+}
+
+.info-text {
+  color: #6b7280;
+  font-size: 14px;
+  font-style: italic;
 }
 </style>

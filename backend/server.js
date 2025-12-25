@@ -8,6 +8,7 @@ const budgetRoutes = require('./routes/budgetRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 const summaryRoutes = require('./routes/summaryRoutes');
+const deletionRequestRoutes = require('./routes/deletionRequestRoutes');
 
 // Import middleware
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
@@ -56,7 +57,8 @@ app.get('/', (req, res) => {
       budgets: '/budgets',
       categories: '/categories',
       transactions: '/transactions',
-      summary: '/summary (overall, by-budget, by-category, by-date)'
+      summary: '/summary (overall, by-budget, by-category, by-date)',
+      deletionRequests: '/deletion-requests'
     }
   });
 });
@@ -67,6 +69,7 @@ app.use('/budgets', budgetRoutes);
 app.use('/categories', categoryRoutes);
 app.use('/transactions', transactionRoutes);
 app.use('/summary', summaryRoutes);
+app.use('/deletion-requests', deletionRequestRoutes);
 
 // 404 handler (must be after all routes)
 app.use(notFoundHandler);

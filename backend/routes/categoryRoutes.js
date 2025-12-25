@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const CategoryController = require('../controllers/categoryController');
 const validate = require('../middleware/validate');
-const { auth } = require('../middleware/auth');
+const { auth, authorize } = require('../middleware/auth');
 
 // Validation schemas
 const createCategorySchema = {
@@ -26,11 +26,11 @@ const idSchema = {
 // All routes require authentication
 router.use(auth);
 
-// Routes
-router.get('/', CategoryController.getAll);
-router.get('/:id', validate(idSchema), CategoryController.getById);
-router.post('/', validate(createCategorySchema), CategoryController.create);
-router.put('/:id', validate({ ...idSchema, ...updateCategorySchema }), CategoryController.update);
-router.delete('/:id', validate(idSchema), CategoryController.delete);
+// All routes require admin role
+router.get('/', authorize('admin'), CategoryController.getAll);
+router.get('/:id', authorize('admin'), validate(idSchema), CategoryController.getById);
+router.post('/', authorize('admin'), validate(createCategorySchema), CategoryController.create);
+router.put('/:id', authorize('admin'), validate({ ...idSchema, ...updateCategorySchema }), CategoryController.update);
+router.delete('/:id', authorize('admin'), validate(idSchema), CategoryController.delete);
 
 module.exports = router;

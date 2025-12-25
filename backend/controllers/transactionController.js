@@ -166,6 +166,11 @@ class TransactionController {
         return ResponseHelper.notFound(res, 'Transaction not found');
       }
 
+      // Business rule: Member hanya bisa edit transaksi yang dibuat sendiri
+      if (req.user.role === 'member' && existingTransaction.created_by !== req.user.id) {
+        return ResponseHelper.forbidden(res, 'You can only edit your own transactions');
+      }
+
       // Business rule 1: amount > 0
       if (amount <= 0) {
         return ResponseHelper.error(res, 'Amount must be greater than 0');
@@ -241,6 +246,12 @@ class TransactionController {
       const existingTransaction = await Transaction.findById(id);
       if (!existingTransaction) {
         return ResponseHelper.notFound(res, 'Transaction not found');
+      }
+
+      // Business rule: Only admin can delete transactions
+      // Member should use deletion request feature instead
+      if (req.user.role === 'member') {
+        return ResponseHelper.forbidden(res, 'Members cannot delete transactions directly. Please submit a deletion request instead.');
       }
 
       await Transaction.delete(id);

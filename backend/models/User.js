@@ -58,6 +58,17 @@ class User {
   }
 
   /**
+   * Update user role
+   */
+  static async updateRole(id, role) {
+    const [result] = await db.query(
+      'UPDATE users SET role = ?, updated_at = NOW() WHERE id = ?',
+      [role, id]
+    );
+    return result.affectedRows > 0;
+  }
+
+  /**
    * Delete user
    */
   static async delete(id) {

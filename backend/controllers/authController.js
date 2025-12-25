@@ -109,6 +109,84 @@ class AuthController {
       next(error);
     }
   }
+
+  /**
+   * Get all users (Admin only)
+   * GET /auth/users
+   */
+  static async getAllUsers(req, res, next) {
+    try {
+      const users = await User.getAll();
+      
+      return ResponseHelper.success(res, 'Users retrieved successfully', { 
+        users,
+        total: users.length 
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Delete user (Admin only)
+   * DELETE /auth/users/:id
+   */
+  static async deleteUser(req, res, next) {
+    try {
+      const { id } = req.params;
+
+      // Cek apakah user ada
+      const user = await User.findById(id);
+      if (!user) {
+        return ResponseHelper.notFound(res, 'User not found');
+      }
+
+      // Tidak bisa menghapus diri sendiri
+      if (parseInt(id) === req.user.id) {
+        return ResponseHelper.error(res, 'You cannot delete your own account', null, 400);
+      }
+
+      await User.delete(id);
+
+      return ResponseHelper.success(res, 'User deleted successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Update user role (Admin only)
+   * PUT /auth/users/:id/role
+   */
+  static async updateUserRole(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { role } = req.body;
+
+      // Validasi role
+      if (!['admin', 'member'].includes(role)) {
+        return ResponseHelper.error(res, 'Invalid role. Must be admin or member', null, 400);
+      }
+
+      // Cek apakah user ada
+      const user = await User.findById(id);
+      if (!user) {
+        return ResponseHelper.notFound(res, 'User not found');
+      }
+
+      // Tidak bisa mengubah role diri sendiri
+      if (parseInt(id) === req.user.id) {
+        return ResponseHelper.error(res, 'You cannot change your own role', null, 400);
+      }
+
+      await User.updateRole(id, role);
+      const updatedUser = await User.findById(id);
+
+      return ResponseHelper.success(res, 'User role updated successfully', { user: updatedUser });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = AuthController;

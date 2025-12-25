@@ -54,8 +54,11 @@
             <td>{{ trx.payment_method }}</td>
             <td>
               <router-link :to="`/transactions/${trx.id}`" class="btn btn-sm btn-primary">View</router-link>
-              <router-link :to="`/transactions/${trx.id}/edit`" class="btn btn-sm btn-success">Edit</router-link>
-              <button @click="deleteTransaction(trx.id)" class="btn btn-sm btn-danger">Delete</button>
+              <template v-if="canEditDelete(trx)">
+                <router-link :to="`/transactions/${trx.id}/edit`" class="btn btn-sm btn-success">Edit</router-link>
+                <button v-if="isAdmin" @click="deleteTransaction(trx.id)" class="btn btn-sm btn-danger">Delete</button>
+                <button v-else @click="requestDelete(trx)" class="btn btn-sm btn-warning">Request Delete</button>
+              </template>
             </td>
           </tr>
         </tbody>
@@ -71,7 +74,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import apiClient from '../api/axios';
 
 export default {
@@ -80,6 +83,18 @@ export default {
     const transactions = ref([]);
     const filters = ref({ trx_type: '', date_from: '', date_to: '' });
     const pagination = ref({ page: 1, limit: 10, total: 0, totalPages: 1 });
+
+    // Get current user
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const isAdmin = computed(() => user.role === 'admin');
+
+    // Check if user can edit/delete transaction
+    const canEditDelete = (transaction) => {
+      // Admin can edit/delete all transactions
+      if (isAdmin.value) return true;
+      // Member can only edit/delete their own transactions
+      return transaction.created_by === user.id;
+    };
 
     const fetchTransactions = async () => {
       const params = { page: pagination.value.page, limit: pagination.value.limit, ...filters.value };
@@ -92,8 +107,37 @@ export default {
 
     const deleteTransaction = async (id) => {
       if (!confirm('Delete this transaction?')) return;
-      await apiClient.delete(`/transactions/${id}`);
-      fetchTransactions();
+      try {
+        await apiClient.delete(`/transactions/${id}`);
+        fetchTransactions();
+      } catch (error) {
+        alert(error.response?.data?.message || 'Error deleting transaction');
+      }
+    };
+
+    const requestDelete = async (transaction) => {
+      const reason = prompt(`Request to delete transaction?\n\nTransaction: ${transaction.category_name} - Rp ${formatNumber(transaction.amount)}\n\nPlease provide a reason (min 10 characters):`);
+      
+      if (!reason) return;
+      
+      if (reason.length < 10) {
+        alert('Reason must be at least 10 characters');
+        return;
+      }
+      
+      try {
+        const response = await apiClient.post('/deletion-requests', {
+          transaction_id: transaction.id,
+          reason: reason
+        });
+        
+        if (response.data.success) {
+          alert('Deletion request submitted successfully! Admin will review your request.');
+          fetchTransactions();
+        }
+      } catch (error) {
+        alert(error.response?.data?.message || 'Error submitting deletion request');
+      }
     };
 
     const changePage = (page) => {
@@ -105,7 +149,18 @@ export default {
 
     onMounted(fetchTransactions);
 
-    return { transactions, filters, pagination, fetchTransactions, deleteTransaction, changePage, formatNumber };
+    return { 
+      transactions, 
+      filters, 
+      pagination, 
+      isAdmin,
+      canEditDelete,
+      fetchTransactions, 
+      deleteTransaction, 
+      requestDelete,
+      changePage, 
+      formatNumber 
+    };
   }
 };
 </script>

@@ -2,7 +2,8 @@
   <div class="categories">
     <div class="header">
       <h1>📂 Categories</h1>
-      <button @click="showForm = true" class="btn btn-primary">+ Add Category</button>
+      <button v-if="isAdmin" @click="showForm = true" class="btn btn-primary">+ Add Category</button>
+      <span v-else class="info-text">📖 Viewing categories (read-only)</span>
     </div>
     
     <div v-if="showForm" class="modal">
@@ -41,7 +42,7 @@
             <th>Type</th>
             <th>Description</th>
             <th>Status</th>
-            <th>Actions</th>
+            <th v-if="isAdmin">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -58,7 +59,7 @@
                 {{ category.is_active ? 'Active' : 'Inactive' }}
               </span>
             </td>
-            <td>
+            <td v-if="isAdmin">
               <button @click="editCategory(category)" class="btn btn-sm btn-primary">Edit</button>
               <button @click="deleteCategory(category.id)" class="btn btn-sm btn-danger">Delete</button>
             </td>
@@ -70,7 +71,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import apiClient from '../api/axios';
 
 export default {
@@ -78,6 +79,10 @@ export default {
   setup() {
     const categories = ref([]);
     const showForm = ref(false);
+
+    // Check if user is admin
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const isAdmin = computed(() => user.role === 'admin');
     const editingId = ref(null);
     const form = ref({ name: '', type: 'expense', description: '', is_active: 1 });
 
@@ -124,13 +129,24 @@ export default {
 
     onMounted(fetchCategories);
 
-    return { categories, showForm, editingId, form, handleSubmit, editCategory, deleteCategory, cancelForm };
+    return { 
+      categories, 
+      showForm, 
+      editingId, 
+      form, 
+      isAdmin,
+      handleSubmit, 
+      editCategory, 
+      deleteCategory, 
+      cancelForm 
+    };
   }
 };
 </script>
 
 <style scoped>
 .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.info-text { color: #6b7280; font-size: 14px; font-style: italic; }
 .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
 .modal-content { max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; }
 .form-actions { display: flex; gap: 10px; margin-top: 20px; }

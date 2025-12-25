@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const BudgetController = require('../controllers/budgetController');
 const validate = require('../middleware/validate');
-const { auth } = require('../middleware/auth');
+const { auth, authorize } = require('../middleware/auth');
 
 // Validation schemas
 const createBudgetSchema = {
@@ -30,11 +30,11 @@ const idSchema = {
 // All routes require authentication
 router.use(auth);
 
-// Routes
-router.get('/', BudgetController.getAll);
-router.get('/:id', validate(idSchema), BudgetController.getById);
-router.post('/', validate(createBudgetSchema), BudgetController.create);
-router.put('/:id', validate({ ...idSchema, ...updateBudgetSchema }), BudgetController.update);
-router.delete('/:id', validate(idSchema), BudgetController.delete);
+// All routes require admin role
+router.get('/', authorize('admin'), BudgetController.getAll);
+router.get('/:id', authorize('admin'), validate(idSchema), BudgetController.getById);
+router.post('/', authorize('admin'), validate(createBudgetSchema), BudgetController.create);
+router.put('/:id', authorize('admin'), validate({ ...idSchema, ...updateBudgetSchema }), BudgetController.update);
+router.delete('/:id', authorize('admin'), validate(idSchema), BudgetController.delete);
 
 module.exports = router;
